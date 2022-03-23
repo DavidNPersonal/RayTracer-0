@@ -11,16 +11,6 @@ pub struct Ray
 }
 
 impl Ray {
-    //pub fn origin(&self) -> MyVec3
-    //{
-    //    return self.p;
-    //}
-
-    //pub fn direction(&self) -> MyVec3
-    //{
-    //    return self.direction;
-    //}
-    
     pub fn at(&self, ds: f64) -> MyVec3
     {
         return self.p + ds * self.direction;

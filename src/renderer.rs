@@ -53,30 +53,31 @@ impl Renderer
         break_line.dedup();                 // Remove duplicates, which should not happen, but just in case
 
         let mut bitmap: Vec<u8> = vec![0; (rdr.image_width * rdr.image_height * rdr.clrdepth) as usize];
-        
+
+        let mut thread_idx = 0;
         let mut start: u32 = 0;
-
-        
+          
         //thread::scope(|scope| {
-            for end in break_line
-            {
-                let first_element = (start * clrdepth * image_width) as usize;
-                let final_element = (end *   clrdepth * image_width) as usize;
-                let number_of_lines = end - start;
+        for end in break_line
+        {
+            let first_element = (start * clrdepth * image_width) as usize;
+            let final_element = (end *   clrdepth * image_width) as usize;
+            let number_of_lines = end - start;
 
-                start = end;
+            //scope.spawn(|_| {
+                let a = first_element;
+                let b = final_element;
+                let c   = number_of_lines;
+                let first_line = start;
 
-                //scope.spawn( |_| {
-                    let a = first_element;
-                    let b = final_element;
-                    let c = number_of_lines;
+                render_lines(&rdr, horizontal_step, vertical_step, &mut bitmap[a..b], first_line as u32, c as u32);
+            //});
 
-                    render_lines(&rdr, horizontal_step, vertical_step, &mut bitmap[a..b], a as u32, c as u32);
-                //});
-                
-            }
+            thread_idx = thread_idx + 1;
+            start = end;
+        }
         //}).unwrap();
-
+        
         return bitmap;
     }
 
