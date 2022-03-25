@@ -16,7 +16,7 @@ pub struct Renderer
 {
     image_width: u32,
     image_height: u32, 
-    clrdepth: u32, 
+    colour_channels: u32, 
     samples_per_pixel: u32, 
     max_ray_bounce_depth: u32, 
     camera: Camera, 
@@ -25,12 +25,12 @@ pub struct Renderer
 
 impl Renderer 
 {
-    pub fn new(image_width: u32, image_height: u32, clrdepth: u32, samples_per_pixel: u32, max_ray_bounce_depth: u32, camera: Camera, world_element: WorldElement) -> Renderer
+    pub fn new(image_width: u32, image_height: u32, colour_channels: u32, samples_per_pixel: u32, max_ray_bounce_depth: u32, camera: Camera, world_element: WorldElement) -> Renderer
     {
         Renderer{
             image_width,
             image_height,
-            clrdepth, 
+            colour_channels, 
             samples_per_pixel, 
             max_ray_bounce_depth, 
             camera, 
@@ -39,15 +39,22 @@ impl Renderer
     }
 }
 
-    pub fn render(rdr: Renderer) -> Vec<u8>
+    pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
     {
         let viewport        = rdr.camera.viewport;
 
         let horizontal_step   =        (viewport.width  as f64 / rdr.image_width  as f64) * viewport.horizontal_vector;
         let vertical_step     = -1.0 * (viewport.height as f64 / rdr.image_height as f64) * viewport.vertical_vector;
 
-        let number_of_threads = 8; 
-        let lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
+        let mut number_of_threads = target_number_of_threads;
+        let mut lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
+
+        // Take care of the degenerate case where there are as many threads as horizontal lines in the image by reducing the number of threads
+        while lines_per_thread * number_of_threads > rdr.image_height
+        {
+            number_of_threads = number_of_threads - 1;
+            lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
+        }
 
         /*
          * Temporary memory locations to which each thread will write (one per thread)
@@ -56,7 +63,7 @@ impl Renderer
         let mut submap: Vec<Vec<u8>> = Vec::with_capacity(number_of_threads as usize);
         for _ in 0..number_of_threads
         {
-            submap.push(vec![0; (rdr.image_width * rdr.clrdepth * lines_per_thread) as usize]);
+            submap.push(vec![0; (rdr.image_width * rdr.colour_channels * lines_per_thread) as usize]);
         }
 
         /*
@@ -101,14 +108,14 @@ impl Renderer
         /*
          * Write the final image out to a vector once all the threads have terminated (guaranteed by thread::scope)
          */
-        let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.clrdepth * lines_per_thread * number_of_threads) as usize);
+        let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.colour_channels * lines_per_thread * number_of_threads) as usize);
 
         for x in submap.iter()
         {
             bitmap.extend(x);
         }
 
-        bitmap.resize((rdr.image_width * rdr.image_height * rdr.clrdepth) as usize, 0);
+        bitmap.resize((rdr.image_width * rdr.image_height * rdr.colour_channels) as usize, 0);
 
         return bitmap;
     }
@@ -123,7 +130,7 @@ impl Renderer
 
         for y in 0..number_of_lines
         {
-            let mut bitmap_idx: usize = (y * rdr.image_width * rdr.clrdepth) as usize;
+            let mut bitmap_idx: usize = (y * rdr.image_width * rdr.colour_channels) as usize;
 
             let viewport_row  = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
 
