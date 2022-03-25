@@ -101,12 +101,14 @@ impl Renderer
         /*
          * Write the final image out to a vector once all the threads have terminated (guaranteed by thread::scope)
          */
-        let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.image_height * rdr.clrdepth) as usize);
+        let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.clrdepth * lines_per_thread * number_of_threads) as usize);
 
         for x in submap.iter()
         {
             bitmap.extend(x);
         }
+
+        bitmap.resize((rdr.image_width * rdr.image_height * rdr.clrdepth) as usize, 0);
 
         return bitmap;
     }
