@@ -1,8 +1,16 @@
-use crate::{ray::Ray, camera::{Camera, Viewport}, my_vec3::MyVec3, world_element::WorldElement, scatter};
+use crate::{ray::Ray, camera::Camera, my_vec3::MyVec3, world_element::WorldElement, scatter};
 
 use rand::Rng;
 //use std::thread;
 use crossbeam_utils::thread;
+
+// A structure created to workaround one of Rust's deficiencies (not being able to use different elements of a vector as function parameters in multiple functions)
+#[derive(Copy, Clone)]
+pub struct RenderScope
+{
+    first_line: u32,
+    number_of_lines: u32
+}
 
 pub struct Renderer
 {
@@ -33,58 +41,83 @@ impl Renderer
 
     pub fn render(rdr: Renderer) -> Vec<u8>
     {
-        let viewport: Viewport = rdr.camera.viewport;
+        let viewport        = rdr.camera.viewport;
 
         let horizontal_step   =        (viewport.width  as f64 / rdr.image_width  as f64) * viewport.horizontal_vector;
         let vertical_step     = -1.0 * (viewport.height as f64 / rdr.image_height as f64) * viewport.vertical_vector;
 
-        let clrdepth    = rdr.clrdepth;
-        let image_width = rdr.image_width;
-
-        let number_of_threads = 4; 
+        let number_of_threads = 8; 
         let lines_per_thread  = rdr.image_height / number_of_threads;
 
-        let mut break_line: Vec<u32> = Vec::new();
-        for n in 1..number_of_threads       // Actually goes from 1 to (number_of_threads - 1), this is important as we do not want the final value to be written in case the image height is not exacly divisible by the number of threads
+        /*
+         * Temporary memory locations to which each thread will write (one per thread)
+         * Concatenated a full image at the end of the function
+         */
+        let mut submap: Vec<Vec<u8>> = Vec::with_capacity(number_of_threads as usize);
+        for _ in 0..number_of_threads
+        {
+            submap.push(vec![0; (rdr.image_width * rdr.image_height * rdr.clrdepth / 2) as usize]);
+        }
+
+        /*
+         * Prepare the thread rendering parameters ahead of time to allow for iterators to be used
+         * as a way to get around the ownership problem of accessing the elements of a vector directly
+         */
+
+        let mut render_scope: Vec<RenderScope> = Vec::with_capacity(number_of_threads as usize);
+        let mut break_line:           Vec<u32> = Vec::with_capacity(number_of_threads as usize);
+
+        // The number of lines of the image to process per thread
+        for n in 1..number_of_threads       // (number_of_threads - 1) circuits; this is on purpose as we do not want the final value to be written until after the loop
         {
             break_line.push(lines_per_thread * n);
         }
-        break_line.push(rdr.image_height);
-        break_line.dedup();                 // Remove duplicates, which should not happen, but just in case
+        break_line.push(rdr.image_height);      // Ensures that the final thread processes all remaining lines (which will not be 'lines_per_thread' where the vertical resolution is not exactly divisible by the number of threads)
+        break_line.dedup();                     // Remove duplicates
 
-        let mut bitmap: Vec<u8> = vec![0; (rdr.image_width * rdr.image_height * rdr.clrdepth) as usize];
-
-        let mut thread_idx = 0;
-        let mut start: u32 = 0;
-          
-        //thread::scope(|scope| {
-        for end in break_line
+        let mut first_line: u32 = 0;
+        for end_line in break_line
         {
-            let first_element = (start * clrdepth * image_width) as usize;
-            let final_element = (end *   clrdepth * image_width) as usize;
-            let number_of_lines = end - start;
+            render_scope.push(RenderScope{first_line, number_of_lines: end_line - first_line});
 
-            //scope.spawn(|_| {
-                let a = first_element;
-                let b = final_element;
-                let c   = number_of_lines;
-                let first_line = start;
-
-                render_lines(&rdr, horizontal_step, vertical_step, &mut bitmap[a..b], first_line as u32, c as u32);
-            //});
-
-            thread_idx = thread_idx + 1;
-            start = end;
+            first_line = end_line;
         }
-        //}).unwrap();
+
+        /*
+         * Multi-threaded rendering
+         */
+
+        thread::scope(|scope| {
+
+            for (x, z) in submap.iter_mut().zip(&mut render_scope)
+            {
+                scope.spawn(|_| {   
+                    render_lines(&rdr, horizontal_step, vertical_step, &mut *x, *z);
+                });
+            }
+
+        }).unwrap();
         
+        /*
+         * Write the final image out to a vector once all the threads have terminated (guaranteed by thread::scope)
+         */
+        let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.image_height * rdr.clrdepth) as usize);
+
+        for x in submap.iter()
+        {
+            bitmap.extend(x);
+        }
+
         return bitmap;
     }
 
 
-    pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVec3, bitmap: &mut [u8], first_line: u32, number_of_lines: u32)
+    pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVec3, bitmap: &mut [u8], rsc: RenderScope)
     {
         let mut rng = rand::thread_rng();
+
+        let first_line      = rsc.first_line;
+        let number_of_lines = rsc.number_of_lines;
 
         for y in 0..number_of_lines
         {
