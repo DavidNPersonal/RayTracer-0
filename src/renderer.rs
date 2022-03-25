@@ -8,7 +8,7 @@ use crossbeam_utils::thread;
 #[derive(Copy, Clone)]
 pub struct RenderScope
 {
-    first_line: u32,
+    begin_line: u32,
     number_of_lines: u32
 }
 
@@ -47,16 +47,16 @@ impl Renderer
         let vertical_step     = -1.0 * (viewport.height as f64 / rdr.image_height as f64) * viewport.vertical_vector;
 
         let number_of_threads = 8; 
-        let lines_per_thread  = rdr.image_height / number_of_threads;
+        let lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
 
         /*
          * Temporary memory locations to which each thread will write (one per thread)
-         * Concatenated a full image at the end of the function
+         * Concatenated to give the full image at the end of the function
          */
         let mut submap: Vec<Vec<u8>> = Vec::with_capacity(number_of_threads as usize);
         for _ in 0..number_of_threads
         {
-            submap.push(vec![0; (rdr.image_width * rdr.image_height * rdr.clrdepth / 2) as usize]);
+            submap.push(vec![0; (rdr.image_width * rdr.clrdepth * lines_per_thread) as usize]);
         }
 
         /*
@@ -75,12 +75,12 @@ impl Renderer
         break_line.push(rdr.image_height);      // Ensures that the final thread processes all remaining lines (which will not be 'lines_per_thread' where the vertical resolution is not exactly divisible by the number of threads)
         break_line.dedup();                     // Remove duplicates
 
-        let mut first_line: u32 = 0;
+        let mut begin_line: u32 = 0;
         for end_line in break_line
         {
-            render_scope.push(RenderScope{first_line, number_of_lines: end_line - first_line});
+            render_scope.push(RenderScope{begin_line, number_of_lines: end_line - begin_line});
 
-            first_line = end_line;
+            begin_line = end_line;
         }
 
         /*
@@ -116,14 +116,14 @@ impl Renderer
     {
         let mut rng = rand::thread_rng();
 
-        let first_line      = rsc.first_line;
+        let begin_line      = rsc.begin_line;
         let number_of_lines = rsc.number_of_lines;
 
         for y in 0..number_of_lines
         {
             let mut bitmap_idx: usize = (y * rdr.image_width * rdr.clrdepth) as usize;
 
-            let viewport_row  = rdr.camera.viewport.reference_corner + (first_line + y) as f64 * vertical_step;
+            let viewport_row  = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
 
             for x in 0..rdr.image_width
             {
