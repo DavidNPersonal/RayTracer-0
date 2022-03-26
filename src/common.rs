@@ -21,12 +21,30 @@ pub fn uniform_within_unit_circle() -> MyVec3
 {
     let mut rng = rand::thread_rng();
 
-    let mut p = MyVec3 {x: rng.gen::<f64>(), y: rng.gen::<f64>(), z: 0.0};
-
-    while p.squared_length() >= 1.0
+    loop 
     {
-        p = MyVec3 {x: rng.gen::<f64>(), y: rng.gen::<f64>(), z: 0.0};
-    }
+        let p = MyVec3 {x: 2.0 * rng.gen::<f64>() - 1.0, y: 2.0 * rng.gen::<f64>() - 1.0, z: 0.0};
 
-    return p;
+        if p.squared_length() < 1.0
+        {
+            break p;
+        }
+    }
+}
+
+pub fn random_point_in_unit_sphere() -> MyVec3
+{
+    let mut rng = rand::thread_rng();
+
+    loop 
+    {
+        // Random point in the cube [-1,-1,-1] -> [+1, +1, +1]
+        let p = MyVec3{x: 2.0 * rng.gen::<f64>() - 1.0, y: 2.0 * rng.gen::<f64>() - 1.0, z: 2.0 * rng.gen::<f64>() - 1.0};
+
+        // Continue choosing random points in the square until the chosen point also lies in a sphere of radius 1 centred at [0, 0, 0]
+        if p.squared_length() < 1.0
+        {
+            break p;
+        }
+    }
 }

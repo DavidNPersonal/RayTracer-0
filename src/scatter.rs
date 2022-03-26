@@ -1,6 +1,4 @@
-use crate::{my_vec3::MyVec3, ray::Ray, rayinfo::RayInfo, common::uniform_random};
-
-use rand::Rng;
+use crate::{my_vec3::MyVec3, ray::Ray, rayinfo::RayInfo, common::{uniform_random, random_point_in_unit_sphere}};
 
 #[derive(Debug)]
 #[derive(Copy, Clone)]
@@ -12,29 +10,13 @@ pub enum ScatteringType
 }
 
 
-pub fn random_point_in_unit_sphere() -> MyVec3
-{
-    let mut rng = rand::thread_rng();
-
-    // Random point in the cube [-1,-1,-1] -> [+1, +1, +1]
-    let mut p = MyVec3{x: 2.0 * rng.gen::<f64>() - 1.0, y: 2.0 * rng.gen::<f64>() - 1.0, z: 2.0 * rng.gen::<f64>() - 1.0};
-
-    // Continue choosing random points in the square until the chosen point also lies in a sphere of radius 1 centred at [0, 0, 0]
-    while p.squared_length() > 1.0
-    {
-        p = MyVec3{x: 2.0 * rng.gen::<f64>() - 1.0, y: 2.0 * rng.gen::<f64>() - 1.0, z: 2.0 * rng.gen::<f64>() - 1.0};
-    }
-
-    return p;
-}
-
 pub fn scatter(r: Ray, ray_info: &RayInfo) -> MyVec3
 {
     match ray_info.material.surface
     {
         ScatteringType::DiffuseScattering    => diffuse_scatter   (r, ray_info.normal),
-        ScatteringType::MetallicScattering   => metallic_scatter  (r, ray_info.normal, match ray_info.material.metal_fuzz {None => {0.0}, Some(metal_fuzz) => {metal_fuzz}}),
-        ScatteringType::RefractiveScattering => refractive_scatter(r, ray_info.normal, ray_info.is_front, 0.0, match ray_info.material.index_of_refraction {None => {0.0}, Some(index_of_refraction) => {index_of_refraction}}),
+        ScatteringType::MetallicScattering   => metallic_scatter  (r, ray_info.normal, ray_info.material.metal_fuzz.unwrap_or(0.0)),
+        ScatteringType::RefractiveScattering => refractive_scatter(r, ray_info.normal, ray_info.is_front, 0.0, ray_info.material.index_of_refraction.unwrap_or(0.0)),
     }
 }
 
@@ -116,6 +98,7 @@ pub fn refractive_scatter(ray: Ray, normal: MyVec3, is_front: bool, reflectivity
     fn schlick_approximation(cos_incident_angle: f64, index_of_refraction: f64) -> f64
     {
         let mut r0 = (1.0 - index_of_refraction) / (1.0 + index_of_refraction);
+        
         r0 = r0 * r0;
         
         r0 + (1.0 - r0) * f64::powi(1.0 - cos_incident_angle, 5)

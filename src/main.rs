@@ -39,8 +39,12 @@ struct Args {
     #[clap(short, long, default_value_t = 10)]
     samples_per_pixel: u32,
 
+    /// Ray bounce depth (maximum number of ray bounces before declared black)
+    #[clap(short, long, default_value_t = 50)]
+    ray_bounce_depth: u32,
+
     /// Number of threads to use (in the range 1 to 32 - out-of-range values will be clamped to this range)
-    #[clap(short, long, default_value_t = 1)]
+    #[clap(short, long, default_value_t = 8)]
     number_of_threads: u32,
 }
 
@@ -69,7 +73,7 @@ fn main()
     let field_of_view_vertical: f64 = (20.0/90.0) * std::f64::consts::PI / 2.0;
 
     let samples_per_pixel: u32     = u32::clamp(args.samples_per_pixel, MIN_SAMPLES_PER_PIXEL, MAX_SAMPLES_PER_PIXEL);
-    let max_ray_bounce_depth: u32  = 50;
+    let max_ray_bounce_depth: u32  = cmp::max  (1, args.ray_bounce_depth);
     let number_of_threads: u32     = u32::clamp(args.number_of_threads, MIN_NUMBER_OF_THREADS, MAX_NUMBER_OF_THREADS);
 
     /*
