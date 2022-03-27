@@ -27,7 +27,7 @@ pub fn uniform_within_unit_circle() -> MyVec3
 
         if p.squared_length() < 1.0
         {
-            break p;
+            return p;
         }
     }
 }
@@ -44,7 +44,7 @@ pub fn random_point_in_unit_sphere() -> MyVec3
         // Continue choosing random points in the square until the chosen point also lies in a sphere of radius 1 centred at [0, 0, 0]
         if p.squared_length() < 1.0
         {
-            break p;
+            return p;
         }
     }
 }
