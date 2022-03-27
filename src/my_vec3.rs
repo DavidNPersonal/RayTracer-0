@@ -18,15 +18,12 @@ pub struct MyVec3 {
 impl MyVec3 {
     pub fn squared_length(&self) -> f64
     {
-        return self.x*self.x + self.y*self.y + self.z*self.z;
+        self.x*self.x + self.y*self.y + self.z*self.z
     }
 
     pub fn length(&self) -> f64
     {
-        let sqrt = f64::sqrt;       // Allows the use of sqrt(x) rather than x.sqrt() in order that the code reads like math (which is much easier to parse - who the hell needs that kind of context switch, stupid Rust)
-        let length   = sqrt(self.squared_length());
-
-        return length;
+        f64::sqrt(self.squared_length())
     }
 
     pub fn normalize(&mut self)
@@ -40,7 +37,7 @@ impl MyVec3 {
 
     pub fn dot(&self, rhs: MyVec3) -> f64
     {
-        return self.x * rhs.x + self.y * rhs.y + self.z * rhs.z;
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
     pub fn cross(&self, rhs: MyVec3) -> MyVec3
@@ -108,7 +105,14 @@ pub fn random_vec3() -> MyVec3
     MyVec3{x: uniform_random(), y: uniform_random(), z: uniform_random()}
 }
 
+
 pub fn random_in_interval_vec3(min: f64, max: f64) -> MyVec3
 {
     MyVec3{x: random_in_interval(min, max), y: random_in_interval(min, max), z: random_in_interval(min, max)}
+}
+
+
+pub fn vec3_normalize(v: MyVec3) -> MyVec3
+{
+    MyVec3 {x: v.x / v.length(), y: v.y / v.length(), z: v.z / v.length()}
 }
