@@ -80,13 +80,15 @@ impl Camera
         let up             = vec3_normalize(camera_up.unwrap_or(MyVec3 { x: 0.0, y: 1.0, z: 0.0 }));
         let viewport_distance = focus_distance.unwrap_or(1.0);
 
-        let direction = match (camera_direction, camera_target)
-        {
-            (Some(camera_direction), None) => { vec3_normalize(camera_direction) }
-            (None, Some(target))           => { target - location }
-            (Some(_), Some(_))                    => { return Err("Camera fn new: Both camera direction and target position specified. Only one of camera direction and target position should be specified when defining camera position, orientation, and direction".to_string()); }
-            (None, None)                          => { return Err("Camera fn new: No camera direction or target position specified. One of camera direction and target position must be specified when defining camera position, orientation, and direction".to_string()); }
-        };
+        let direction = vec3_normalize(
+                               match (camera_direction, camera_target)
+                               {
+                                   (Some(camera_direction), None) => { camera_direction }
+                                   (None, Some(target))           => { target - location }
+                                   (Some(_), Some(_))                    => { return Err("Camera fn new: Both camera direction and target position specified. Only one of camera direction and target position should be specified when defining camera position, orientation, and direction".to_string()); }
+                                   (None, None)                          => { return Err("Camera fn new: No camera direction or target position specified. One of camera direction and target position must be specified when defining camera position, orientation, and direction".to_string()); }
+                               }
+        );
 
         let lens_radius = match aperture
         {
