@@ -1,4 +1,4 @@
-use crate::{ray::Ray, camera::Camera, my_vec3::MyVec3, world_element::WorldElement, scatter::scatter};
+use crate::{ray::Ray, camera::Camera, my_vec3::{MyVec3, vec3_normalize}, world_element::WorldElement, scatter::scatter};
 
 use rand::Rng;
 use crossbeam_utils::thread;
@@ -27,13 +27,13 @@ impl Renderer
     pub fn new(image_width: u32, image_height: u32, colour_channels: u32, samples_per_pixel: u32, max_ray_bounce_depth: u32, camera: Camera, world_element: WorldElement) -> Renderer
     {
         Renderer{
-            image_width,
-            image_height,
-            colour_channels, 
-            samples_per_pixel, 
-            max_ray_bounce_depth, 
-            camera, 
-            world_element
+                 image_width,
+                 image_height,
+                 colour_channels, 
+                 samples_per_pixel, 
+                 max_ray_bounce_depth, 
+                 camera, 
+                 world_element
         }
     }
 }
@@ -171,11 +171,8 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
                 }
 
                 // Colour is determined by the ray's final direction (i.e. the ray which is the source of the light which comes from the background in this case)
-                let mut unit_direction = r.direction;
-                unit_direction.normalize();
-                let t = 0.5 * (unit_direction.y + 1.0);
-
-                let sky_box_colour = (1.0 - t) * MyVec3{x: 1.0, y: 1.0, z: 1.0} + t * MyVec3{x: 0.5, y: 0.7, z: 1.0};
+                let w         = 0.5 * (vec3_normalize(r.direction).y + 1.0);
+                let sky_box_colour = (1.0 - w) * MyVec3{x: 1.0, y: 1.0, z: 1.0} + w * MyVec3{x: 0.5, y: 0.7, z: 1.0};
 
                 final_colour = final_colour + total_attenuation * sky_box_colour;
             }
