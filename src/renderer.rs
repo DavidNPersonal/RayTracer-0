@@ -49,7 +49,7 @@ pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
     let mut lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
 
     // Take care of the degenerate case where there are as many threads as horizontal lines in the image by reducing the number of threads
-    while lines_per_thread * number_of_threads > rdr.image_height
+    while lines_per_thread * (number_of_threads - 1) >= rdr.image_height
     {
         number_of_threads = number_of_threads - 1;
         lines_per_thread  = (rdr.image_height as f64 / number_of_threads as f64).ceil() as u32;
@@ -59,6 +59,7 @@ pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
      * Temporary memory locations to which each thread will write (one per thread)
      * Concatenated to give the full image at the end of the function
      */
+
     let mut submap: Vec<Vec<u8>> = Vec::with_capacity(number_of_threads as usize);
     for _ in 0..number_of_threads
     {
@@ -73,13 +74,15 @@ pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
     let mut render_scope: Vec<RenderScope> = Vec::with_capacity(number_of_threads as usize);
     let mut break_line:           Vec<u32> = Vec::with_capacity(number_of_threads as usize);
 
-    // The number of lines of the image to process per thread
-    for n in 1..number_of_threads       // (number_of_threads - 1) circuits; this is on purpose as we do not want the final value to be written until after the loop
+    // Make a list of the number of lines of the image to process per thread, first (number_of_threads - 1)
+    // are added, then the final thread is allocated all remaining lines (this will be a different number
+    // lines where the total number of lines of the image is not divisible by the number of threads)
+    for n in 1..number_of_threads       
     {
         break_line.push(lines_per_thread * n);
     }
-    break_line.push(rdr.image_height);      // Ensures that the final thread processes all remaining lines (which will not be 'lines_per_thread' where the vertical resolution is not exactly divisible by the number of threads)
-    break_line.dedup();                     // Remove duplicates
+    break_line.push(rdr.image_height);
+    break_line.dedup();
 
     let mut begin_line: u32 = 0;
     for end_line in break_line
@@ -107,9 +110,10 @@ pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
     /*
      * Write the final image out to a vector once all the threads have terminated (guaranteed by thread::scope)
      */
+
     let mut bitmap = Vec::with_capacity((rdr.image_width * rdr.colour_channels * lines_per_thread * number_of_threads) as usize);
 
-    for x in submap.iter()
+    for x in submap.iter() 
     {
         bitmap.extend(x);
     }
