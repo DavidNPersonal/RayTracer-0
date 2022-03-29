@@ -12,6 +12,5 @@ pub struct RayInfo
     pub ds:        f64,
     pub is_front:  bool,
 
-    //pub incident_ray: Ray,
     pub material: Material
 }

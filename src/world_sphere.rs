@@ -43,9 +43,9 @@ impl Intersect for WESphere {
             //normal.normalize();
 
             let is_front  = normal.dot(r.direction) < 0.0;
-            normal = if is_front {normal} else {-1.0 * normal};
+            normal        = if is_front {normal} else {-1.0 * normal};
 
-            let ray_info = RayInfo{intersect, normal, ds, is_front, material: self.material};
+            let ray_info  = RayInfo{intersect, normal, ds, is_front, material: self.material};
 
             return (true, ray_info);
         }

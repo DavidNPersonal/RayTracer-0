@@ -77,7 +77,7 @@ impl Camera
     {
 
         // Derive the viewport parameters before initializing the camera
-        let up             = vec3_normalize(camera_up.unwrap_or(MyVec3 { x: 0.0, y: 1.0, z: 0.0 }));
+        let up                = vec3_normalize(camera_up.unwrap_or(MyVec3 { x: 0.0, y: 1.0, z: 0.0 }));
         let viewport_distance = focus_distance.unwrap_or(1.0);
 
         let direction: MyVec3 = vec3_normalize(
@@ -92,7 +92,7 @@ impl Camera
 
         let lens_radius = match aperture
         {
-            None                => { None }
+            None           => { None }
             Some(aperture) => { Some(aperture / 2.0) }
         };
         
@@ -101,7 +101,7 @@ impl Camera
         let horizontal_vector = vec3_normalize(up.cross(-1.0 * direction));
         let vertical_vector   = vec3_normalize(-1.0 * direction.cross(horizontal_vector));
 
-        let viewport_height = 2.0 * f64::abs(viewport_distance) * f64::tan(vertical_fov / 2.0);
+        let viewport_height   = 2.0 * f64::abs(viewport_distance) * f64::tan(vertical_fov / 2.0);
 
         let viewport: Viewport = Viewport::new(viewport_distance,
                                                viewport_height,

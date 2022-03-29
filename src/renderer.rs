@@ -7,19 +7,19 @@ use crossbeam_utils::thread;
 #[derive(Copy, Clone)]
 pub struct RenderScope
 {
-    begin_line: u32,
+    begin_line:      u32,
     number_of_lines: u32
 }
 
 pub struct Renderer
 {
-    image_width: u32,
-    image_height: u32, 
-    colour_channels: u32, 
-    samples_per_pixel: u32, 
+    image_width:          u32,
+    image_height:         u32, 
+    colour_channels:      u32, 
+    samples_per_pixel:    u32, 
     max_ray_bounce_depth: u32, 
-    camera: Camera, 
-    world_element: WorldElement
+    camera:               Camera, 
+    world_element:        WorldElement
 }
 
 impl Renderer 
@@ -40,7 +40,7 @@ impl Renderer
 
 pub fn render(rdr: Renderer, target_number_of_threads: u32) -> Vec<u8>
 {
-    let viewport        = rdr.camera.viewport;
+    let viewport          = rdr.camera.viewport;
 
     let horizontal_step   =        (viewport.width  as f64 / rdr.image_width  as f64) * viewport.horizontal_vector;
     let vertical_step     = -1.0 * (viewport.height as f64 / rdr.image_height as f64) * viewport.vertical_vector;
@@ -134,7 +134,7 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
     for y in 0..number_of_lines
     {
         let mut bitmap_idx: usize = (y * rdr.image_width * rdr.colour_channels) as usize;
-        let viewport_row  = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
+        let viewport_row          = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
 
         for x in 0..rdr.image_width
         {
@@ -145,7 +145,7 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
             for _s in 0..rdr.samples_per_pixel
             {
                 let mut total_attenuation = MyVec3{x:1.0, y:1.0, z:1.0};
-                let mut ray_bounce           = 0;
+                let mut ray_bounce        = 0;
 
                 let     viewport_offset   = (rng.gen::<f64>() - 0.5) * vertical_step + (rng.gen::<f64>() - 0.5) * horizontal_step;
 
@@ -166,14 +166,14 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
 
                     total_attenuation = total_attenuation * ray_info.material.attenuation;
 
-                    ray_bounce = ray_bounce + 1;
+                    ray_bounce += 1;
                 }
 
                 // Colour is determined by the ray's final direction (i.e. the ray which is the source of the light which comes from the background in this case)
-                let w         = 0.5 * (vec3_normalize(r.direction).y + 1.0);
+                let w              = 0.5 * (vec3_normalize(r.direction).y + 1.0);
                 let sky_box_colour = (1.0 - w) * MyVec3{x: 1.0, y: 1.0, z: 1.0} + w * MyVec3{x: 0.5, y: 0.7, z: 1.0};
 
-                final_colour = final_colour + total_attenuation * sky_box_colour;
+                final_colour       = final_colour + total_attenuation * sky_box_colour;
             }
 
             final_colour = final_colour / rdr.samples_per_pixel as f64;

@@ -12,14 +12,14 @@ pub fn create_world() -> WorldElement
         for n in -11..=11
         {
             let material_chooser = uniform_random();
-            let sphere_centre = MyVec3 {x: m as f64 + 0.9 * uniform_random(), y: 0.2, z: n as f64 + 0.9 * uniform_random()};
+            let sphere_centre    = MyVec3 {x: m as f64 + 0.9 * uniform_random(), y: 0.2, z: n as f64 + 0.9 * uniform_random()};
 
             if (sphere_centre - MyVec3{x:4.0, y:0.2, z:0.0}).length() > 0.9
             {
                 if material_chooser < 0.8
                 {
                     // Choose a diffuse material
-                    let attenuation = random_vec3() * random_vec3();
+                    let attenuation             = random_vec3() * random_vec3();
                     let random_diffuse_material = Material{surface: ScatteringType::DiffuseScattering, attenuation, metal_fuzz: None, index_of_refraction: None};
 
                     world_element.add_sphere(sphere_centre.x, sphere_centre.y, sphere_centre.z, 0.2, random_diffuse_material);
@@ -28,7 +28,7 @@ pub fn create_world() -> WorldElement
                 {
                     // Choose a metallic material
                     let attenuation = random_in_interval_vec3(0.5, 1.0);
-                    let fuzz          = random_in_interval(0.0, 0.5);
+                    let fuzz        = random_in_interval     (0.0, 0.5);
 
                     let random_metallic_material = Material{surface: ScatteringType::MetallicScattering, attenuation, metal_fuzz: Some(fuzz), index_of_refraction: None};
                     world_element.add_sphere(sphere_centre.x, sphere_centre.y, sphere_centre.z, 0.2, random_metallic_material);

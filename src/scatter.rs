@@ -42,8 +42,7 @@ pub fn diffuse_scatter(_ray: Ray, normal: MyVec3) -> MyVec3
 pub fn metallic_scatter(ray: Ray, normal: MyVec3, fuzz_extent: f64) -> MyVec3
 {
     let ray_to_normal_projection = ray.direction.dot(normal) * normal;
-
-    let mut scatter_direction = ray.direction - 2.0 * ray_to_normal_projection;
+    let mut scatter_direction    = ray.direction - 2.0 * ray_to_normal_projection;
 
     // Fuzzy reflections
     let fuzz_vector = fuzz_extent * random_point_in_unit_sphere();
@@ -87,8 +86,8 @@ pub fn refractive_scatter(ray: Ray, normal: MyVec3, is_front: bool, reflectivity
         }
         else
         {
-            let c2               = eta * (ray_unit_vector + cos_incident_angle * normal);
-            let c1               = -1.0 * f64::sqrt(f64::abs(1.0 - c2.squared_length())) * normal;
+            let c2 = eta * (ray_unit_vector + cos_incident_angle * normal);
+            let c1 = -1.0 * f64::sqrt(f64::abs(1.0 - c2.squared_length())) * normal;
 
             return c1 + c2
         }
@@ -106,6 +105,6 @@ pub fn refractive_scatter(ray: Ray, normal: MyVec3, is_front: bool, reflectivity
 
     fn reflect(ray: Ray, normal: MyVec3) -> MyVec3
     {
-        return ray.direction - 2.0 * ray.direction.dot(normal) * normal
+        ray.direction - 2.0 * ray.direction.dot(normal) * normal
     }
 }

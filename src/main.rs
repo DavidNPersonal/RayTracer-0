@@ -99,24 +99,23 @@ fn main()
     * Render
     */
     let renderer: Renderer = Renderer::new(image_width, image_height, colour_channels, samples_per_pixel, max_ray_bounce_depth, camera, world_element);
+
     let bitmap = render(renderer, number_of_threads);
-    
-    let mut idx = 0;
 
     // Image buffer
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
 
+    let mut idx = 0;
     // Write out the final image to a file
     for (_x, _y, pixel) in img.enumerate_pixels_mut()
     {
-        let rd = bitmap[idx]; idx = idx + 1;
-        let gn = bitmap[idx]; idx = idx + 1;
-        let bl = bitmap[idx]; idx = idx + 1;
+        let rd = bitmap[idx]; idx += 1;
+        let gn = bitmap[idx]; idx += 1;
+        let bl = bitmap[idx]; idx += 1;
 
         *pixel = image::Rgb([rd, gn, bl])
     }
 
-    //img.save("test.png").unwrap();
     img.save("test.jpg").unwrap();
     
 }

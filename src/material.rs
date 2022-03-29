@@ -8,9 +8,9 @@ use crate::{my_vec3::MyVec3, scatter::ScatteringType};
 #[derive(Copy, Clone)]
 
 pub struct Material {
-    pub surface: ScatteringType,
-    pub attenuation: MyVec3,
-    pub metal_fuzz: Option<f64>,
+    pub surface:             ScatteringType,
+    pub attenuation:         MyVec3,
+    pub metal_fuzz:          Option<f64>,
     pub index_of_refraction: Option<f64>
 }
 
