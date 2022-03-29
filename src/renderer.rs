@@ -134,7 +134,6 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
     for y in 0..number_of_lines
     {
         let mut bitmap_idx: usize = (y * rdr.image_width * rdr.colour_channels) as usize;
-
         let viewport_row  = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
 
         for x in 0..rdr.image_width
@@ -184,9 +183,9 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
             let gn = f64::clamp(f64::sqrt(final_colour.y), 0.0, 0.999);
             let bl = f64::clamp(f64::sqrt(final_colour.z), 0.0, 0.999);
 
-            bitmap[bitmap_idx] = (256.0 * rd) as u8; bitmap_idx = bitmap_idx + 1;
-            bitmap[bitmap_idx] = (256.0 * gn) as u8; bitmap_idx = bitmap_idx + 1;
-            bitmap[bitmap_idx] = (256.0 * bl) as u8; bitmap_idx = bitmap_idx + 1;
+            bitmap[bitmap_idx] = (256.0 * rd) as u8; bitmap_idx += 1;
+            bitmap[bitmap_idx] = (256.0 * gn) as u8; bitmap_idx += 1;
+            bitmap[bitmap_idx] = (256.0 * bl) as u8; bitmap_idx += 1;
         }
     }
 }
