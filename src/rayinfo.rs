@@ -3,7 +3,7 @@ use crate::material::Material;
 
 // This debug attribute implements fmt::Debug which will allow us
 // to print the struct using {:?}
-#[derive(Debug)]
+#[derive(Debug, Default)]
 
 pub struct RayInfo 
 {

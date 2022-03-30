@@ -3,11 +3,8 @@ use std::ops;
 
 use crate::common::{uniform_random, random_in_interval};
 
-// This debug attribute implements fmt::Debug which will allow us
-// to print the struct using {:?}
-#[derive(Debug)]
-
-#[derive(Copy, Clone)]
+//
+#[derive(Debug, Copy, Clone, Default)]
 
 pub struct MyVec3 {
     pub x: f64, 

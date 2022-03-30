@@ -19,18 +19,18 @@ pub fn create_world() -> WorldElement
                 if material_chooser < 0.8
                 {
                     // Choose a diffuse material
-                    let attenuation             = random_vec3() * random_vec3();
-                    let random_diffuse_material = Material{surface: ScatteringType::DiffuseScattering, attenuation, metal_fuzz: None, index_of_refraction: None};
+                    let gain                    = random_vec3() * random_vec3();
+                    let random_diffuse_material = Material{surface: ScatteringType::DiffuseScattering, gain, metal_fuzz: None, index_of_refraction: None};
 
                     world_element.add_sphere(sphere_centre.x, sphere_centre.y, sphere_centre.z, 0.2, random_diffuse_material);
                 }
                 else if material_chooser < 0.95
                 {
                     // Choose a metallic material
-                    let attenuation = random_in_interval_vec3(0.5, 1.0);
-                    let fuzz        = random_in_interval     (0.0, 0.5);
+                    let gain = random_in_interval_vec3(0.5, 1.0);
+                    let fuzz = random_in_interval     (0.0, 0.5);
 
-                    let random_metallic_material = Material{surface: ScatteringType::MetallicScattering, attenuation, metal_fuzz: Some(fuzz), index_of_refraction: None};
+                    let random_metallic_material = Material{surface: ScatteringType::MetallicScattering, gain, metal_fuzz: Some(fuzz), index_of_refraction: None};
                     world_element.add_sphere(sphere_centre.x, sphere_centre.y, sphere_centre.z, 0.2, random_metallic_material);
                 }
                 else
@@ -43,12 +43,13 @@ pub fn create_world() -> WorldElement
     }
 
     // Large spheres, centered
-    let diffuse_material_large  = Material{surface: ScatteringType::DiffuseScattering,  attenuation: MyVec3{x:0.4, y: 0.2, z: 0.1}, metal_fuzz: None,      index_of_refraction: None};
-    let metallic_material_large = Material{surface: ScatteringType::MetallicScattering, attenuation: MyVec3{x:0.7, y: 0.6, z: 0.5}, metal_fuzz: Some(0.0), index_of_refraction: None};
+    let diffuse_material_large  = Material{surface: ScatteringType::DiffuseScattering,  gain: MyVec3{x:0.4, y: 0.2, z: 0.1}, metal_fuzz: None,      index_of_refraction: None};
+    let metallic_material_large = Material{surface: ScatteringType::MetallicScattering, gain: MyVec3{x:0.7, y: 0.6, z: 0.5}, metal_fuzz: Some(0.0), index_of_refraction: None};
 
     world_element.add_sphere( 0.0, 1.0, 0.0, 1.0, material::GLASS);
     world_element.add_sphere(-4.0, 1.0, 0.0, 1.0, diffuse_material_large);
-    world_element.add_sphere( 4.0, 1.0, 0.0, 1.0, metallic_material_large);
+    //world_element.add_sphere( 4.0, 1.0, 0.0, 1.0, metallic_material_large);
+    world_element.add_moving_sphere( 4.0, 1.0, 0.0, 1.0, metallic_material_large, 0.25, MyVec3{x: 1.0, y: 0.0, z: 0.0});
 
     return world_element;
 }

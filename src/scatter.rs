@@ -1,12 +1,17 @@
 use crate::{my_vec3::MyVec3, ray::Ray, rayinfo::RayInfo, common::{uniform_random, random_point_in_unit_sphere}};
 
-#[derive(Debug)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum ScatteringType
 {
     DiffuseScattering,
     MetallicScattering,
     RefractiveScattering
+}
+
+// #derive(Default) is experimental for enums, so implement explicitly instead
+impl Default for ScatteringType
+{
+    fn default() -> Self {ScatteringType::DiffuseScattering}
 }
 
 

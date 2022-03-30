@@ -1,27 +1,50 @@
-use crate::{my_vec3::MyVec3, rayinfo::RayInfo, ray::Ray, world_element::{Intersect}, material::Material, scatter::ScatteringType};
+use crate::{my_vec3::{MyVec3, vec3_normalize}, rayinfo::RayInfo, ray::Ray, world_element::{Intersect}, material::Material};
 
-// This debug attribute implements fmt::Debug which will allow us
-// to print the struct using {:?}
-#[derive(Debug)]
+// This sphere can only move in a straight line, and does not stop
+// Elements not declared pub in order to force the use of new to instantiate (thereby normalizing direction at the time of creation)
+pub struct WEMovingSphere {
+    sphere_zero: WESphere,
+    speed:       f64,
+    direction:   MyVec3
+}
 
+impl WEMovingSphere {
+    pub fn new(sphere_zero: WESphere, speed: f64, direction: MyVec3) -> WEMovingSphere
+    {
+        WEMovingSphere { sphere_zero, speed, direction: vec3_normalize(direction) }
+    }
+}
+
+impl Intersect for WEMovingSphere {
+    fn intersect(&self, ray: &Ray, min_scale: f64, max_scale: f64, cast_time: f64) -> (bool, RayInfo)
+    {
+        // Determine the position of the sphere at the cast time of the ray, and intersect
+        let c = self.sphere_zero.c + (cast_time * self.speed) * self.direction;
+        let r = self.sphere_zero.r;
+
+        let sphere_t = WESphere{ c, r, material: self.sphere_zero.material };
+
+        return sphere_t.intersect(ray, min_scale, max_scale, cast_time);
+    }
+}
+
+// Non-moving sphere
 pub struct WESphere {
-    pub c: MyVec3,
-    pub r: f64,
+    pub c:        MyVec3,
+    pub r:        f64,
     pub material: Material
 }
 
 impl Intersect for WESphere {
-    fn intersect(&self, r: &Ray, min_scale: f64, max_scale: f64) -> (bool, RayInfo)
+    fn intersect(&self, ray: &Ray, min_scale: f64, max_scale: f64, _cast_time: f64) -> (bool, RayInfo)
     {
         let sqrt = f64::sqrt; 
 
-        let a = r.direction.squared_length();
-        let h = r.direction.dot(r.p - self.c);   	// b = 2h
-        let c = (r.p - self.c).squared_length() - 1.0 * self.r * self.r;
+        let a = ray.direction.squared_length();
+        let h = ray.direction.dot(ray.p - self.c);   	// b = 2h
+        let c = (ray.p - self.c).squared_length() - 1.0 * self.r * self.r;
 
         let s = h * h - a * c;
-
-        let rfake = RayInfo{intersect: MyVec3{x:0.0, y:0.0, z:0.0}, normal: MyVec3{x:0.0, y:0.0, z:0.0}, ds: 0.0, is_front: false, material: Material{surface: ScatteringType::DiffuseScattering, attenuation: MyVec3{x: 0.5, y: 0.5, z: 0.5}, metal_fuzz: None, index_of_refraction: None}};
 
         if s >= 0.0
         {
@@ -32,17 +55,17 @@ impl Intersect for WESphere {
                 ds = (-h + sqrt(s)) / a;
                 if ds < min_scale || ds > max_scale
                 {
-                    return (false, rfake);
+                    return (false, RayInfo::default());
                 }
             }
 
-            let intersect = r.at(ds);
+            let intersect = ray.at(ds);
 
             let mut normal = (intersect - self.c) / self.r;		// This vector is already normalized to length = 1, so no explicit normalization step is necessary
             //let mut normal = intersect - self.c;
             //normal.normalize();
 
-            let is_front  = normal.dot(r.direction) < 0.0;
+            let is_front  = normal.dot(ray.direction) < 0.0;
             normal        = if is_front {normal} else {-1.0 * normal};
 
             let ray_info  = RayInfo{intersect, normal, ds, is_front, material: self.material};
@@ -50,7 +73,7 @@ impl Intersect for WESphere {
             return (true, ray_info);
         }
 
-        return(false, rfake);
+        return(false, RayInfo::default());
     }
 
 }

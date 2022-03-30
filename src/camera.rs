@@ -1,7 +1,5 @@
 use crate::{common::uniform_within_unit_circle, my_vec3::{MyVec3, vec3_normalize}, ray::Ray};
 
-// This debug attribute implements fmt::Debug which will allow us
-// to print the struct using {:?}
 #[derive(Debug, Copy, Clone)]
 pub struct Viewport
 {
@@ -57,8 +55,9 @@ pub struct Camera
 
     pub aspect_ratio: f64,
 
-    pub focus_distance: Option<f64>,
-    pub lens_radius:    Option<f64>,
+    pub focus_distance:  Option<f64>,
+    pub lens_radius:     Option<f64>,
+    pub exposure_length: Option<f64>,
 
     pub viewport: Viewport,
 }
@@ -71,6 +70,7 @@ impl Camera
                camera_up: Option<MyVec3>,
                focus_distance: Option<f64>,
                aperture: Option<f64>,
+               exposure_length: Option<f64>,
                aspect_ratio: f64,
                vertical_fov: f64)
                -> Result<Camera, String>
@@ -103,25 +103,25 @@ impl Camera
 
         let viewport_height   = 2.0 * f64::abs(viewport_distance) * f64::tan(vertical_fov / 2.0);
 
-        let viewport: Viewport = Viewport::new(viewport_distance,
-                                               viewport_height,
-                                               aspect_ratio * viewport_height,
-                                               up,
-                                               horizontal_vector,
-                                               vertical_vector,
-                                               location,
-                                               direction);
+        let viewport          = Viewport::new(viewport_distance,
+                                              viewport_height,
+                                              aspect_ratio * viewport_height,
+                                              up,
+                                              horizontal_vector,
+                                              vertical_vector,
+                                              location,
+                                              direction);
 
-        Ok(Camera { aspect_ratio, location, direction, focus_distance, lens_radius, viewport })
+        Ok(Camera { aspect_ratio, location, direction, focus_distance, lens_radius, exposure_length, viewport })
     }
 
 
-    pub fn generate_ray(&self, viewport_coord: MyVec3) -> Ray
+    pub fn generate_ray(&self, viewport_coord: MyVec3, cast_time: f64) -> Ray
     {
         match self.lens_radius
         {
             // Pinhole camera
-            None => { return Ray { p: self.location, direction: viewport_coord - self.location } }
+            None => { return Ray { p: self.location, direction: viewport_coord - self.location, cast_time } }
 
             Some(lens_radius) =>
             {
@@ -130,7 +130,7 @@ impl Camera
                 let lens_offset     = lens_radius * uniform_within_unit_circle();
                 let lens_ray_origin = lens_centre + lens_offset.x * self.viewport.horizontal_vector + lens_offset * self.viewport.vertical_vector;
 
-                return Ray { p: lens_ray_origin, direction: viewport_coord - lens_ray_origin };
+                return Ray { p: lens_ray_origin, direction: viewport_coord - lens_ray_origin, cast_time };
             }
         }
     }

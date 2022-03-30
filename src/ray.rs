@@ -6,7 +6,8 @@ use crate::my_vec3::MyVec3;
 pub struct Ray
 {
     pub p:         MyVec3,
-    pub direction: MyVec3
+    pub direction: MyVec3, 
+    pub cast_time: f64
 }
 
 impl Ray

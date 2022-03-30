@@ -84,10 +84,11 @@ fn main()
     let camera_target    = MyVec3 { x:   0.0, y: 0.0, z: 0.0};
     let camera_up        = MyVec3 { x:   0.0, y: 1.0, z: 0.0};
 
-    let focus_distance = 10.0;
-    let aperture       = 0.1;
+    let focus_distance  = 10.0;
+    let aperture        = 0.1;
+    let exposure_length = 1.0;
 
-    let camera: Camera = Camera::new(camera_location, None, Some(camera_target), Some(camera_up), Some(focus_distance), Some(aperture), aspect_ratio, field_of_view_vertical).unwrap();
+    let camera: Camera = Camera::new(camera_location, None, Some(camera_target), Some(camera_up), Some(focus_distance), Some(aperture), Some(exposure_length), aspect_ratio, field_of_view_vertical).unwrap();
 
     /* 
     * Prepare the world
@@ -98,7 +99,7 @@ fn main()
     /* 
     * Render
     */
-    let renderer: Renderer = Renderer::new(image_width, image_height, colour_channels, samples_per_pixel, max_ray_bounce_depth, camera, world_element);
+    let renderer = Renderer::new(image_width, image_height, colour_channels, samples_per_pixel, max_ray_bounce_depth, camera, world_element);
 
     let bitmap = render(renderer, number_of_threads);
 

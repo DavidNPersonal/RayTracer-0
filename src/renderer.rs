@@ -128,32 +128,34 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
 {
     let mut rng = rand::thread_rng();
 
+    // The set of horizontal lines of the final image bitmap which are being processed on this call (or thread)
     let begin_line      = rsc.begin_line;
     let number_of_lines = rsc.number_of_lines;
 
     for y in 0..number_of_lines
     {
-        let mut bitmap_idx: usize = (y * rdr.image_width * rdr.colour_channels) as usize;
-        let viewport_row          = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
+        let mut bitmap_idx   = (y * rdr.image_width * rdr.colour_channels) as usize;
+        let     viewport_row = rdr.camera.viewport.reference_corner + (begin_line + y) as f64 * vertical_step;
 
         for x in 0..rdr.image_width
         {
-            let mut final_colour = MyVec3{x:0.0, y:0.0, z:0.0};
-
-            let viewport_current = viewport_row + x as f64 * horizontal_step;
+            let mut final_colour     = MyVec3{x:0.0, y:0.0, z:0.0};
+            let     viewport_current = viewport_row + x as f64 * horizontal_step;
 
             for _s in 0..rdr.samples_per_pixel
             {
-                let mut total_attenuation = MyVec3{x:1.0, y:1.0, z:1.0};
-                let mut ray_bounce        = 0;
+                let mut total_gain = MyVec3{x:1.0, y:1.0, z:1.0};
+                let mut ray_bounce = 0;
 
-                let     viewport_offset   = (rng.gen::<f64>() - 0.5) * vertical_step + (rng.gen::<f64>() - 0.5) * horizontal_step;
+                // Cast rays at a random point in the neighbourhood of the exact point on the viewport and at a random time during the exposure
+                let     viewport_offset = (rng.gen::<f64>() - 0.5) * vertical_step + (rng.gen::<f64>() - 0.5) * horizontal_step;
+                let     cast_time       = rng.gen::<f64>() * rdr.camera.exposure_length.unwrap_or(0.0);
 
                 // Cast the initial ray from the camera
-                let mut r = rdr.camera.generate_ray(viewport_current + viewport_offset);
+                let mut r = rdr.camera.generate_ray(viewport_current + viewport_offset, cast_time);
 
                 loop {
-                    let (f_intersect, ray_info) = rdr.world_element.intersect_all(&r, 0.001, f64::INFINITY);
+                    let (f_intersect, ray_info) = rdr.world_element.intersect_all(&r, 0.001, f64::INFINITY, cast_time);
 
                     if f_intersect == false || ray_bounce > rdr.max_ray_bounce_depth
                     {
@@ -162,9 +164,9 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
 
                     let scatter_direction = scatter(r, &ray_info);
 
-                    r = Ray{p: ray_info.intersect, direction: scatter_direction};
+                    r = Ray{p: ray_info.intersect, direction: scatter_direction, cast_time: r.cast_time};
 
-                    total_attenuation = total_attenuation * ray_info.material.attenuation;
+                    total_gain = total_gain * ray_info.material.gain;
 
                     ray_bounce += 1;
                 }
@@ -173,7 +175,7 @@ pub fn render_lines(rdr: &Renderer, horizontal_step: MyVec3, vertical_step: MyVe
                 let w              = 0.5 * (vec3_normalize(r.direction).y + 1.0);
                 let sky_box_colour = (1.0 - w) * MyVec3{x: 1.0, y: 1.0, z: 1.0} + w * MyVec3{x: 0.5, y: 0.7, z: 1.0};
 
-                final_colour       = final_colour + total_attenuation * sky_box_colour;
+                final_colour       = final_colour + total_gain * sky_box_colour;
             }
 
             final_colour = final_colour / rdr.samples_per_pixel as f64;
