@@ -20,7 +20,8 @@ impl WorldElement
         {
             let (f_intersect, ray_info) = object.intersect(ray, min_scale, max_scale, cast_time);
 
-            if f_intersect{
+            if f_intersect
+            {
                 f_any_intersect = true;
                 if ray_info.ds < ray_scale_closest
                 {

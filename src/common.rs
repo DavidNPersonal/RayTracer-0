@@ -47,3 +47,9 @@ pub fn random_point_in_unit_sphere() -> MyVec3
         }
     }
 }
+
+
+pub fn order_pair(x: f64, y: f64) -> (f64, f64)
+{
+    if x < y { (x, y) } else { (y, x) }
+}

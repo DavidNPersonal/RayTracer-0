@@ -9,6 +9,7 @@ mod rayinfo;
 mod ray;
 mod world_element;
 mod world_sphere;
+mod bounding_box;
 mod material;
 mod scatter;
 mod common;
